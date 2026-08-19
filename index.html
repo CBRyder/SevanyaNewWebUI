@@ -427,15 +427,77 @@
 
 
     // Sends Message into the chat window
-    function sendMessage() {
+    let conversationId = Number(localStorage.getItem('conversationId')) || null;
+
+    async function sendMessage() {
       const input = document.getElementById("chat-input");
       const message = input.value.trim();
-      if (message) {
-        const chatWindow =  document.querySelector(".chat-log");
-        chatWindow.innerHTML += `<div class="msg-you"><strong>You:</strong> ${message}</div><br>`; 
-        input.value = "";
+      if (!message) return;
+
+      const chatLog = document.querySelector(".chat-log");
+      chatLog.innerHTML += `<div class="msg-you"><strong>You:</strong> ${message}</div><br>`;
+      input.value = "";
+      input.style.height = "auto";
+
+    let bubble = null;
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, conversation_id: conversationId }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop();
+
+      for (const part of parts) {
+        const line = part.trim();
+        if (!line.startsWith('data:')) continue;
+        const ev = JSON.parse(line.slice(5));
+
+        if (ev.type === 'conversation') {
+          conversationId = ev.id;
+          localStorage.setItem('conversationId', ev.id);
+        } else if (ev.type === 'text') {
+          if (!bubble) {
+            bubble = document.createElement('div');
+            bubble.className = 'msg-ai';
+            bubble.innerHTML = '<strong>Sevanya:</strong> ';
+            chatLog.appendChild(bubble);
+          }
+          bubble.append(document.createTextNode(ev.text));
+        } else if (ev.type === 'tool') {
+          bubble = null;
+          const note = document.createElement('div');
+          note.className = 'msg-tool';
+          note.textContent = '[' + ev.text + ']';
+          chatLog.appendChild(note);
+        } else if (ev.type === 'error') {
+          const err = document.createElement('div');
+          err.className = 'msg-error';
+          err.textContent = ev.text;
+          chatLog.appendChild(err);
+        }
       }
     }
+  } catch (err) {
+    chatLog.innerHTML += `<div class="msg-error">${err}</div>`;
+  }
+
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
     
     function updateMessageColor(who, color) {
       document.documentElement.style.setProperty(`--${who}ChatColor`, color)
