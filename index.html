@@ -252,6 +252,19 @@
     <!-- Panels -->
     <div class="panels">
       <button class="panel-close" onclick="togglePanels()">‹ Back</button>
+      
+      <div class="profile">
+        <div class="profile-you">
+          <input type="text" id="your-name" value="You" oninput="updateProfileField('your-name', this.value)">
+          <input type="text" id="your-status" placeholder="Set a status…" oninput="updateProfileField('your-status', this.value)">
+        </div>
+        <div class="profile-ai">
+          <strong>Sevanya</strong>
+          <span class="status" id="ai-status">checking…</span>
+        </div>
+      </div>
+
+      
       <!-- Task List Panel -->
       <div class="panel">
         <div class="panel-header" onclick="openPanel('task-list')">
