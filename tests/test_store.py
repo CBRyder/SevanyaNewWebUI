@@ -150,3 +150,28 @@ def test_each_thread_gets_its_own_connection(store, tmp_path):
 
     assert not errors, f"cross-thread write failed: {errors}"
     assert len(store.load_messages(conversation)) == 1
+
+
+# --- settings ----------------------------------------------------------------
+
+
+def test_an_unset_setting_returns_the_given_default(store):
+    assert store.get_setting("mode") is None
+    assert store.get_setting("mode", "teach") == "teach"
+
+
+def test_a_setting_round_trips(store):
+    store.set_setting("mode", "direct")
+    assert store.get_setting("mode") == "direct"
+
+
+def test_setting_a_key_again_overwrites_rather_than_duplicating(store):
+    store.set_setting("mode", "direct")
+    store.set_setting("mode", "quiz")
+    assert store.get_setting("mode") == "quiz"
+
+
+def test_a_setting_survives_reopening_the_store(store, tmp_path):
+    store.set_setting("mode", "review")
+    reopened = Store(tmp_path / "test.db")
+    assert reopened.get_setting("mode") == "review"

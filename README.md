@@ -96,11 +96,36 @@ POST /api/db/backup
 POST /api/db/clear-history       conversations only — journal/tasks kept
 GET  /api/notifications          read-only
 GET  /api/tasks                  read-only — her list, not yours
+GET  /api/modes                  every mode, and which one's active
+POST /api/mode                   {"name": "..."} — global, takes effect next message
 GET  /api/conversations
 GET  /api/conversations/{id}
 GET  /
 GET  /manifest.json               404 until you add one
 ```
+
+## Modes
+
+How she teaches, not what she is — the guardrails in `prompt.py`'s `SYSTEM`
+(recall before claiming memory, the task list stays read-only, no full
+solutions) hold in every mode. One mode is active at a time, globally, like
+the model backend — not per-conversation — and a change takes effect on your
+very next message, no restart needed.
+
+| mode | what changes |
+|---|---|
+| `teach` | the default — nothing added, `SYSTEM` already is this |
+| `direct` | skips the hint-first pacing, answers straightforwardly with the reasoning |
+| `review` | reads what you show her like a reviewer, not a tutor — findings first |
+| `quiz` | checks understanding with small questions before explaining |
+
+`SYSTEM` also now recognizes pushback (resisting the hint itself, not just
+being stuck) as its own signal, in any mode — see `prompt.py` if you want to
+change what counts.
+
+Defined in `prompt.py`'s `MODES` — add to that dict for a new one, nothing
+else to touch. The set is served, not hardcoded into the UI, so a picker
+built against `GET /api/modes` shows whatever's in there automatically.
 
 ## Tests
 
@@ -109,6 +134,6 @@ pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-332 tests, all backend/API — nothing here checks `index.html`'s markup or
+341 tests, all backend/API — nothing here checks `index.html`'s markup or
 JS. That's worth having once your UI settles; see the note above about
 `test_web.py` in `A.I.-Sevanya` for the shape such a test file could take.

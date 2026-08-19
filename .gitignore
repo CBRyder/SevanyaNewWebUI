@@ -6,3 +6,4 @@ venv/
 scratch/
 *.db
 .pytest_cache/
+*.log

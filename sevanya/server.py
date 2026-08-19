@@ -26,6 +26,7 @@ from pydantic import BaseModel
 
 from . import backends, checkin, deps, lifecycle, migrations, push
 from .agent import Agent
+from .prompt import DEFAULT_MODE, MODES
 from .store import CHECKIN_MARKER, Store
 from .tools import PROJECT_ROOT
 
@@ -135,6 +136,21 @@ def _auth(authorization: str | None) -> None:
         raise HTTPException(status_code=401, detail="bad or missing token")
 
 
+class ModeIn(BaseModel):
+    name: str
+
+
+def _current_mode() -> str:
+    name = store.get_setting("mode", DEFAULT_MODE)
+    # Falls back rather than KeyErrors on every request if a stored value
+    # ever names a mode that's since been renamed or dropped.
+    return name if name in MODES else DEFAULT_MODE
+
+
+def _mode_extra() -> str:
+    return MODES[_current_mode()]["addendum"]
+
+
 @app.post("/api/chat")
 def chat(body: ChatIn, authorization: str | None = Header(default=None)):
     """Streaming chat for the web UI.
@@ -154,7 +170,7 @@ def chat(body: ChatIn, authorization: str | None = Header(default=None)):
         # this every thread the browser starts is "(untitled)" in the picker,
         # which makes the picker useless for the one job it has.
         conversation_id = store.new_conversation(title=body.message[:60])
-    agent = Agent(store, conversation_id)
+    agent = Agent(store, conversation_id, system_extra=_mode_extra())
 
     def events():
         # Tell the client which conversation this is, so a phone that didn't
@@ -187,7 +203,9 @@ def ask(body: AskIn, authorization: str | None = Header(default=None)):
     _auth(authorization)
 
     conversation_id = store.new_conversation(title=f"siri: {body.message[:50]}")
-    agent = Agent(store, conversation_id, system_extra=SPOKEN)
+    # Mode first, brevity rule last — the voice constraint sits closest to
+    # the end of the prompt regardless of which mode is active.
+    agent = Agent(store, conversation_id, system_extra=_mode_extra() + SPOKEN)
     return {"reply": agent.send(body.message), "conversation_id": conversation_id}
 
 
@@ -294,6 +312,43 @@ def notifications(authorization: str | None = Header(default=None)):
     """
     _auth(authorization)
     return [dict(row) for row in store.notifications()]
+
+
+@app.get("/api/modes")
+def modes(authorization: str | None = Header(default=None)):
+    """How she's teaching right now, and what else she could do instead.
+
+    Unlike the task list and notifications, this isn't read-only — it's what
+    a mode picker in the UI needs: the current choice plus every option,
+    in one call.
+    """
+    _auth(authorization)
+    return {
+        "current": _current_mode(),
+        "modes": [
+            {"name": name, "label": info["label"], "description": info["description"]}
+            for name, info in MODES.items()
+        ],
+    }
+
+
+@app.post("/api/mode")
+def set_mode(body: ModeIn, authorization: str | None = Header(default=None)):
+    """Change how she teaches, globally — one active mode, like the model.
+
+    Takes effect on the next message, not this one: /api/chat builds a fresh
+    Agent per request and reads the current mode when it does, so there's
+    nothing to restart.
+    """
+    _auth(authorization)
+    if body.name not in MODES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"no such mode {body.name!r} — have: {', '.join(MODES)}",
+        )
+    store.set_setting("mode", body.name)
+    store.notify("mode", f"switched to {body.name}")
+    return {"mode": body.name}
 
 
 @app.get("/api/tasks")

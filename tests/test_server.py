@@ -183,6 +183,8 @@ def test_a_set_token_is_actually_required(tmp_path, monkeypatch, blocks, headers
     assert client.post("/api/chat", json={"message": "hi"}, headers=headers).status_code == 401
     assert client.post("/api/ask", json={"message": "hi"}, headers=headers).status_code == 401
     assert client.get("/api/conversations", headers=headers).status_code == 401
+    assert client.get("/api/modes", headers=headers).status_code == 401
+    assert client.post("/api/mode", json={"name": "direct"}, headers=headers).status_code == 401
 
 
 def test_the_right_token_gets_in(tmp_path, monkeypatch, blocks):
@@ -191,7 +193,54 @@ def test_the_right_token_gets_in(tmp_path, monkeypatch, blocks):
     assert client.get("/api/conversations", headers=headers).status_code == 200
 
 
-# --- static ----------------------------------------------------------------
+# --- modes -------------------------------------------------------------------
+
+
+def test_modes_lists_every_mode_and_defaults_to_teach(tmp_path, monkeypatch, blocks):
+    client, _ = build(tmp_path, monkeypatch, answer(blocks))
+    body = client.get("/api/modes").json()
+    assert body["current"] == "teach"
+    names = {m["name"] for m in body["modes"]}
+    assert names == {"teach", "direct", "review", "quiz"}
+    # Every mode needs both, or a picker built from this has blank rows.
+    assert all(m["label"] and m["description"] for m in body["modes"])
+
+
+def test_setting_an_unknown_mode_400s_and_changes_nothing(tmp_path, monkeypatch, blocks):
+    client, _ = build(tmp_path, monkeypatch, answer(blocks))
+    res = client.post("/api/mode", json={"name": "sarcastic"})
+    assert res.status_code == 400
+    assert client.get("/api/modes").json()["current"] == "teach"
+
+
+def test_setting_a_known_mode_persists_and_shows_up_in_get(tmp_path, monkeypatch, blocks):
+    client, _ = build(tmp_path, monkeypatch, answer(blocks))
+    res = client.post("/api/mode", json={"name": "review"})
+    assert res.status_code == 200
+    assert res.json()["mode"] == "review"
+    assert client.get("/api/modes").json()["current"] == "review"
+
+
+def test_a_mode_change_is_logged_like_every_other_state_change(tmp_path, monkeypatch, blocks):
+    client, _ = build(tmp_path, monkeypatch, answer(blocks))
+    client.post("/api/mode", json={"name": "quiz"})
+    kinds = [n["kind"] for n in client.get("/api/notifications").json()]
+    assert "mode" in kinds
+
+
+def test_mode_changes_what_the_next_chat_actually_sends(tmp_path, monkeypatch, blocks):
+    """The contract server.py owes agent.py: system_extra carries the mode.
+
+    Not a round trip through the stub model — Agent._system() is already
+    covered elsewhere (see test_tasks.py). This checks the one new wire:
+    that a POST /api/mode changes what the *next* request builds, without
+    needing a restart.
+    """
+    client, server = build(tmp_path, monkeypatch, answer(blocks))
+    assert server._mode_extra() == ""  # teach: the null case
+
+    client.post("/api/mode", json={"name": "direct"})
+    assert "Mode: direct" in server._mode_extra()
 
 
 def test_the_page_is_served(tmp_path, monkeypatch, blocks):

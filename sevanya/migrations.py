@@ -23,7 +23,7 @@ from _collections_abc import Callable
 
 # Bumped by adding to MIGRATIONS. A fresh database is stamped with this
 # straight away, because SCHEMA already builds the current shape.
-LATEST = 3
+LATEST = 4
 
 
 class SchemaMismatch(RuntimeError):
@@ -40,6 +40,7 @@ EXPECTED = {
     "journal": {"id", "topic", "note", "conversation_id", "created_at"},
     "task_list": {"id", "task", "done", "conversation_id", "created_at", "completed_at"},
     "notifications": {"id", "kind", "message", "created_at"},
+    "settings": {"key", "value"},
 }
 
 
@@ -75,9 +76,22 @@ def _add_conversation_kind(conn: sqlite3.Connection) -> None:
     add_column(conn, "conversations", "kind", "TEXT NOT NULL DEFAULT 'chat'")
 
 
+def _add_settings_table(conn: sqlite3.Connection) -> None:
+    """A place for small global config, starting with the active teaching mode.
+
+    A whole new table rather than a column, so — unlike add_column above —
+    plain CREATE TABLE IF NOT EXISTS is correct here: a table that never
+    existed before has no old shape to drift from.
+    """
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
+    )
+
+
 MIGRATIONS: list[tuple[int, str, Migration]] = [
     (2, "messages.model — which model wrote each turn", _add_message_model),
     (3, "conversations.kind — yours, or an errand she ran", _add_conversation_kind),
+    (4, "settings — key/value, currently just the active mode", _add_settings_table),
 ]
 
 
