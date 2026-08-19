@@ -421,8 +421,14 @@ def _label(path: Path) -> str:
     translate between what it was shown and what it can ask for.
     """
     root = _root_of(path)
-    relative = path.resolve().relative_to(root)
-    return f"repos/{relative}" if root == REPO_ROOT.resolve() else str(relative)
+    # .as_posix(), not str() — on Windows a plain str(relative) comes back
+    # with backslashes, and that string has to round-trip: it's what the
+    # model reads in a grep hit and what it then passes back to read_file.
+    # A backslash in a JSON tool argument is an escape character waiting to
+    # happen, and even where it survives, it's a path the model was never
+    # shown consistently. One separator, on every platform.
+    relative = path.resolve().relative_to(root).as_posix()
+    return f"repos/{relative}" if root == REPO_ROOT.resolve() else relative
 
 
 def read_file(path: str) -> str:
