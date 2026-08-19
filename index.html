@@ -292,7 +292,7 @@
         alert('Restart Failed: HTTP ' + res.status);
         return;
       }
-      const deadline = Date.now + 20000;
+      const deadline = Date.now() + 20000;
       while (Data.now() < deadline) {
         await new Promise(r => setTimeout(r, 500));
         const now = await getStarted();
