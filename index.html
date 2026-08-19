@@ -236,13 +236,11 @@
         background: var(--backgroundC);
         z-index: 1000;
       }
+      
       .panels.active {
       display: block;
       }
-    }
-
-    /* Responsive Design */
-    @media (max-width: 600px) {
+      
       .main-menu {
         flex-wrap: wrap;
         justify-content: flex-end;
@@ -251,7 +249,14 @@
       .panel-content {
         max-height: 150px;
       }
+      
+      .container {
+        border-bottom-left-radius: 40px;
+        border-bottom-right-radius: 40px;
+        overflow: hidden;
+      }
     }
+
   </style>
 </head>
 <body>
