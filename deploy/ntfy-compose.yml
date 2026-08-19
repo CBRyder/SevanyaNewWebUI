@@ -1,0 +1,40 @@
+# A self-hosted ntfy, so notifications about what you're building never leave
+# your machines.
+#
+#   docker compose -f deploy/ntfy-compose.yml up -d
+#
+# Then point Sevanya at it and subscribe the phone to the same address over
+# Tailscale:
+#
+#   export SEVANYA_NTFY_SERVER=http://<tailscale-name>:8080
+#   export SEVANYA_NTFY_TOPIC=<a long string>
+#
+# deny-all plus a token is the part worth not skipping: without it, anyone who
+# can reach port 8080 can both read your notifications and send you fake ones.
+# Create the token once the container is up:
+#
+#   docker exec -it sevanya-ntfy ntfy user add --role=admin sevanya
+#   docker exec -it sevanya-ntfy ntfy token add sevanya
+#
+# and put that token in SEVANYA_NTFY_TOKEN.
+
+services:
+  ntfy:
+    image: binwiederhier/ntfy
+    container_name: sevanya-ntfy
+    command: serve
+    environment:
+      NTFY_BASE_URL: http://localhost:8080     # set to the tailscale name
+      NTFY_BEHIND_PROXY: "false"
+      NTFY_AUTH_FILE: /var/lib/ntfy/user.db
+      NTFY_AUTH_DEFAULT_ACCESS: deny-all
+      NTFY_CACHE_FILE: /var/lib/ntfy/cache.db
+      NTFY_ATTACHMENT_CACHE_DIR: /var/lib/ntfy/attachments
+    volumes:
+      - ntfy-data:/var/lib/ntfy
+    ports:
+      - 8080:80
+    restart: unless-stopped
+
+volumes:
+  ntfy-data:
