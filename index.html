@@ -282,7 +282,43 @@
         input.value = "";
       }
     }
+    
+    async function restartSession() {
+      if (!confirm("Restart the Server? in progress replies will be lost")) return;
+      
+      const before = await getStarted();
+      const res = await fetch('/api/restart', {method, 'POST'});
+      
+      if (res.status === 409) {
+        const body = await res.json();
+        alert('Could not Restart: ' + body.detail);
+        return;  
+      }
+      if (!res.ok) {
+        alert('Restart Failed: HTTP ' + res.status();
+        return;
+      }
+      const deadline = date.now + 20000;
+      while (Data.now() < deadline) {
+        await new Promise(r => setTimeout(r, 500);
+        const now await getStarted();
+        if (now && now > before) {
+          window.location.reload();
+          return;
+        }
+      }
+      alert('Server did not come back within 20s. Check the machine the server runs on.')
+    }
 
+    async function getStarted() {
+      try {
+        const res = await fetch('/api/health', { cache : 'no-store'});
+        return res.ok ? (await res.json()).started : null;
+      } catch {
+        return null;
+      }
+    }
+    
     //enter behavior, i.e. (enter = send and shift/ctrl + enter = new line)
     document.getElementById("chat-input").addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
@@ -297,7 +333,7 @@
         }
       }
     });
-
+ 
   </script>
 </body>
 </html>
