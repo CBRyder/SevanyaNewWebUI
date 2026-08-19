@@ -10,6 +10,8 @@
       --highlightC: #2a2a40;
       --textC: #f0f0f0;
       --fillC: #591DA3;
+      --yourChatColor: ();
+      --aiChatColor: ();
     }
 
     html, body {
@@ -74,6 +76,7 @@
       align-items: flex-end;
       gap: 0.5rem;
       padding: 1rem;
+      border: 1px solid var(--fillC);
     }
 
     .chat-window textarea {
@@ -83,7 +86,7 @@
       resize: none;
       background: var(--backgroundC);
       color: var(--textC);
-      border: none;
+      border: 1px solid var(--fillC);
       outline: none;
     }
 
