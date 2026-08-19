@@ -329,7 +329,7 @@
       const message = input.value.trim();
       if (message) {
         const chatWindow =  document.querySelector(".chat-log");
-        chatWindow.innerHTML += `<div><strong>You:</strong> ${message}</div><br>`; 
+        chatWindow.innerHTML += `<div class="msg-you"><strong>You:</strong> ${message}</div><br>`; 
         input.value = "";
       }
     }
