@@ -350,10 +350,10 @@
     }
     
     (function restoreMessageColors() {
-      const you = localStorage.getItem('your-msg-color');
-      const ai = localStorage.getItem('ai-msg-color');
-      if (you) {document.documentElement.style.setProperty('--your-msg-color', you); document.getElementById('your-color').value = you; }
-      if (ai) {document.documentElement.style.setProperty('--ai-msg-color', ai); document.getElementById('ai-color').value = ai; }
+      const you = localStorage.getItem('yourChatColor');
+      const ai = localStorage.getItem('aiChatColor');
+      if (you) {document.documentElement.style.setProperty('--yourChatColor', you); document.getElementById('your-color').value = you; }
+      if (ai) {document.documentElement.style.setProperty('--aiChatColor', ai); document.getElementById('ai-color').value = ai; }
     })();
     
     async function restartSession() {
