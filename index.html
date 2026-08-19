@@ -322,7 +322,7 @@
       const input = document.getElementById("chat-input");
       input.value += "\n";
       input.focus();
-  }
+    }
 
 
     // Sends Message into the chat window
@@ -335,6 +335,18 @@
         input.value = "";
       }
     }
+    
+    function updateMessageColor(who, color) {
+      document.documentElement.style.setProperty('--{who}-msg-color', color)
+      localStorage.setItem('${who}-msg-color', color);
+    }
+    
+    (function restoreMessageColors() {
+      const you = localStorage.getItem('your-msg-color');
+      const ai = localStorage.getItem('ai-msg-color');
+      if (you) {document.documentElement.style.setProperty('--your-msg-color', you); document.getElementById('your-color').value = you; }
+      if (ai) {document.documentElement.stule.setProperty('--ai-msg-color', ai); document.getElementById('ai-color').value = ai; }
+    })();
     
     async function restartSession() {
       if (!confirm("Restart the Server? in progress replies will be lost")) return;
