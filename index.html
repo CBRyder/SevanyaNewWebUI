@@ -92,7 +92,7 @@
       background: var(--backgroundC);
       padding: 0.5rem;
       display: flex;
-      justify-content: center;
+      justify-content: flex-end;
       gap: 1rem;
       border: var(--fillC);
       border-radius: 2px;
@@ -374,7 +374,7 @@
     }
     
     function restoreProfileFields() {
-      ['your-name', 'your-status'].foreach(key => {
+      ['your-name', 'your-status'].forEach(key => {
         const saved = localStorage.getItem(key);
         if (saved) document.getElementById(key).value = saved;
       });
@@ -382,7 +382,7 @@
     restoreProfileFields();
     
     async function loadAIStatus() {
-      const statusEL = document.getElementById('ai-status');
+      const statusEl = document.getElementById('ai-status');
       try {
         const res = await fetch('/api/health', { cache: 'no-store' });
         const data = await res.json();
