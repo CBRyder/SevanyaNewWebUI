@@ -101,6 +101,7 @@
     .main-menu button {
       background: var(--backgroundC);
       border: none;
+      font-size: 1.75rem;
       padding: 0.5rem 1rem;
       color: VAR(--textC);
       border-radius: 5px;
@@ -259,9 +260,6 @@
     <!-- Main Menu -->
     <div class="main-menu">
       <button onclick="togglePanels()">☰</button>
-      <button onclick="openPanel('task-list')">Task List</button>
-      <button onclick="openPanel('journal')">Journal</button>
-      <button onclick="openPanel('settings')">Settings</button>
     </div>
 
     <!--Chat Log-->
@@ -439,7 +437,7 @@
         await new Promise(r => setTimeout(r, 500));
         const now = await getStarted();
         if (now && now > before) {
-          window.location.reload(true);
+          window.location.href = window.location.pathname + '?t=' + Date.now();;
           return;
         }
       }
