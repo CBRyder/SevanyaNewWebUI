@@ -359,14 +359,10 @@
     
     //enter behavior, i.e. (enter = send and shift/ctrl + enter = new line)
     document.getElementById("chat-input").addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        if (e.ctrlKey) {
-          e.preventDefault(); //prevent default enter behavior
-          this.value += "\n"; //add newline
-        } else if (e.shiftKey) {
-          e.preventDefault(); //prevent like before
-          this.value += "\n"; //new line
-        } else {
+      if (e.key === "Enter" && (e.ctrlKey || e.shiftKey)) {
+        e.preventDefault(); //prevent default enter behavior
+        this.value += "\n"; //add newline
+        else {
           sendMessage(); //send message
         }
       }
