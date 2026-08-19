@@ -265,12 +265,6 @@
       selectedPanel.classList.add("active");
     }
 
-    // Restart Session
-    function restartSession() {
-      if (confirm("Are you sure you want to restart the session? This will clear your chat history.")) {
-        window.location.reload();
-      }
-    }
 
     // Sends Message into the chat window
     function sendMessage() {
@@ -298,10 +292,10 @@
         alert('Restart Failed: HTTP ' + res.status);
         return;
       }
-      const deadline = date.now + 20000;
+      const deadline = Date.now + 20000;
       while (Data.now() < deadline) {
-        await new Promise(r => setTimeout(r, 500);
-        const now await getStarted();
+        await new Promise(r => setTimeout(r, 500));
+        const now = await getStarted();
         if (now && now > before) {
           window.location.reload();
           return;
