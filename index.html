@@ -15,11 +15,19 @@
     }
     
     .msg-you {
-      color: var(--yourChatColor);
+      background-color: var(--yourChatColor);
+      color: var(--textC);
+      padding: 0.5rem 0.75rem;
+      border-radius: 12px;
+      display: inline-block;
     }
     
     .msg-ai {
-      color: var(--aiChatColor);
+      background-color: var(--aiChatColor);
+      color: var(--text );
+      padding: 0.5rem 0.75rem;
+      border-radius: 12px;
+      display: inline-block;
     }
 
     html, body {
@@ -337,7 +345,7 @@
     }
     
     function updateMessageColor(who, color) {
-      document.documentElement.style.setProperty(`--{who}-msg-color`, color)
+      document.documentElement.style.setProperty(`--${who}-msg-color`, color)
       localStorage.setItem(`${who}-msg-color`, color);
     }
     
