@@ -287,7 +287,7 @@
       if (!confirm("Restart the Server? in progress replies will be lost")) return;
       
       const before = await getStarted();
-      const res = await fetch('/api/restart', {method, 'POST'});
+      const res = await fetch('/api/restart', { method: 'POST' });
       
       if (res.status === 409) {
         const body = await res.json();
