@@ -370,6 +370,30 @@
       input.value += "\n";
       input.focus();
     }
+    
+    function updateProfileField(key, value) {
+      localStorage.setItem(key, value);
+    }
+    
+    function restoreProfileFields() {
+      ['your-name', 'your-status'].foreach(key => {
+        const saved = localStorage.getItem(key);
+        if (saved) document.getElementById(key).value = saved;
+      });
+    }
+    restoreProfileFields();
+    
+    async function loadAIStatus() {
+      const statusEL = document.getElementById('ai-status');
+      try {
+        const res = await fetch('/api/health', { cache: 'no-store' });
+        const data = await res.json();
+        statusEl.textContent = data.backend;
+      } catch (e) {
+        statusEl.textContent = "offline";
+      }
+    }
+    loadAIStatus();
 
 
     // Sends Message into the chat window
