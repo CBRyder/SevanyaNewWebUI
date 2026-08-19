@@ -21,6 +21,22 @@ deploy/        self-hosted ntfy compose file, for push notifications
 markup in progress still starts — `GET /` 404s cleanly instead of crashing
 if `index.html` is ever mid-rewrite.
 
+## Editing the UI from your phone
+
+1. On the phone, go to `index.html` (or any file) on GitHub — the web site
+   works fine in mobile Safari, no app needed — and use its pencil/edit
+   icon. Commit straight to `main` (or open a PR if you'd rather review on
+   a bigger screen first).
+2. Open the Sevanya web page and press restart.
+
+That's the whole loop. Restart doesn't just restart — it runs `git pull
+--ff-only` on this checkout *first*, so whatever you just committed lands on
+the PC's disk before the process comes back up serving it. If that pull
+can't fast-forward (a real conflict, or the machine's offline), nothing
+restarts and you get a 409 explaining why, rather than a restart that quietly
+didn't include your change. `SEVANYA_SKIP_PULL` turns this back into a plain
+restart, if you ever want one without touching git.
+
 ## What was ported, and what wasn't
 
 Every backend module — `server.py`, `store.py`, `backends.py`, `tools.py`,
@@ -83,6 +99,7 @@ drive Sevanya's tools before trusting it day to day.
 | `SEVANYA_CHECKIN_BACKEND` | override the model used for check-ins |
 | `SEVANYA_NTFY_SERVER` / `SEVANYA_NTFY_TOPIC` / `SEVANYA_NTFY_TOKEN` | push notifications — self-host with `deploy/ntfy-compose.yml` |
 | `SEVANYA_SKIP_DEPS` | skip the startup requirements check |
+| `SEVANYA_SKIP_PULL` | make `/api/restart` a plain restart — no git pull first |
 
 ## API surface
 
@@ -90,7 +107,7 @@ drive Sevanya's tools before trusting it day to day.
 POST /api/chat                  streaming (SSE) chat — the web UI
 POST /api/ask                   one-shot, blocking — Siri Shortcuts
 GET  /api/health                no auth required
-POST /api/restart                restarts the server process (execv)
+POST /api/restart                git pull --ff-only, then restarts (execv) — 409 if the pull can't fast-forward
 GET  /api/db                     schema/backup/migration status
 POST /api/db/backup
 POST /api/db/clear-history       conversations only — journal/tasks kept

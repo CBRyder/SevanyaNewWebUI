@@ -6,9 +6,11 @@ server imports agent imports tools.
 """
 
 import os
+import subprocess
 import sys
 import threading
 import time
+from pathlib import Path
 
 # How to start a fresh copy. `python -m sevanya` rather than
 # `-m sevanya.server`, so a restart goes through the bootstrap and picks up a
@@ -47,6 +49,32 @@ def relaunch() -> None:
     straight back.
     """
     os.execv(sys.executable, RELAUNCH)
+
+
+def pull_latest(repo_dir: Path) -> tuple[bool, str]:
+    """Fast-forward this checkout from its remote. Never merges, never discards.
+
+    The point of this existing at all: editing index.html from a phone
+    (through GitHub's own editor, say) has to get onto this machine's disk
+    somehow before a restart can serve it — restart alone only re-execs the
+    process, it never looks at the network.
+
+    --ff-only refuses rather than merging or overwriting anything, so a real
+    conflict — or local changes on this machine that were never pushed —
+    comes back as a failure to report, never a silent loss of work.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_dir), "pull", "--ff-only"],
+            capture_output=True, text=True, timeout=30,
+        )
+    except FileNotFoundError:
+        return False, "git isn't on PATH for this process"
+    except subprocess.TimeoutExpired:
+        return False, "git pull timed out after 30s — offline, or GitHub is slow"
+
+    output = (result.stdout + result.stderr).strip()
+    return result.returncode == 0, (output or "no output")
 
 
 def schedule_restart(delay: float = 0.4) -> None:

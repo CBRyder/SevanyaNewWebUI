@@ -225,20 +225,44 @@ def health():
 
 @app.post("/api/restart")
 def restart(authorization: str | None = Header(default=None)):
-    """Restart the server process.
+    """Pull the latest commit, then restart the server process onto it.
 
     Requires the token when one is set — this is the one endpoint that does
     something to the machine rather than reading from it. With no token set,
     anything that can reach the port can bounce the server; that's the same
     exposure as every other endpoint here, but it's worth knowing.
 
+    Editing index.html away from this machine — GitHub's own editor on a
+    phone, say — only ever changes GitHub. This is the step that gets it
+    onto disk here: a fast-forward pull, immediately before the restart that
+    serves it. If it can't fast-forward — a real conflict, or this machine
+    offline — nothing restarts. Restarting anyway would mean pressing this
+    button and getting a restart with none of what you asked for in it,
+    which is worse than the button just refusing and saying why.
+
     In-flight streams die with the old process. The client polls /api/health
     and picks its thread back up from the database, which is on disk and
     unaffected.
+
+    SEVANYA_SKIP_PULL goes back to a plain restart — for tests, or a machine
+    that was never meant to track a remote at all.
     """
     _auth(authorization)
+
+    if os.environ.get("SEVANYA_SKIP_PULL"):
+        pulled = "skipped (SEVANYA_SKIP_PULL)"
+    else:
+        ok, message = lifecycle.pull_latest(WEB_DIR)
+        if not ok:
+            store.notify("restart-failed", f"pull failed, not restarting: {message}")
+            raise HTTPException(
+                status_code=409, detail=f"pull failed, not restarting: {message}"
+            )
+        pulled = message
+
+    store.notify("restart", f"restarting — {pulled}")
     lifecycle.schedule_restart()
-    return {"restarting": True, "pid": os.getpid()}
+    return {"restarting": True, "pid": os.getpid(), "pulled": pulled}
 
 
 class ClearIn(BaseModel):

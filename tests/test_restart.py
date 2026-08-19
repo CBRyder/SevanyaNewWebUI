@@ -40,6 +40,10 @@ def server(tmp_path):
         "SEVANYA_PORT": str(port),
         "SEVANYA_TOKEN": "test-token",
         "PYTHONPATH": str(ROOT),
+        # This suite is about the restart mechanism, not about git — without
+        # this, /api/restart would run a real `git pull` against whatever
+        # this machine's actual checkout is pointed at on every test run.
+        "SEVANYA_SKIP_PULL": "1",
     }
     proc = subprocess.Popen(
         [sys.executable, "-m", "sevanya"],

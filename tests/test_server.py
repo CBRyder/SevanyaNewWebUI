@@ -332,10 +332,62 @@ def test_restart_schedules_the_relaunch_and_answers_first(tmp_path, monkeypatch,
     client, server = build(tmp_path, monkeypatch, answer(blocks), token="secret")
     called = []
     monkeypatch.setattr(server.lifecycle, "schedule_restart", lambda *a, **k: called.append(True))
+    monkeypatch.setattr(server.lifecycle, "pull_latest", lambda *a, **k: (True, "up to date"))
 
     body = client.post("/api/restart", headers={"Authorization": "Bearer secret"}).json()
     assert body["restarting"] is True
     assert body["pid"] == __import__("os").getpid()
+    assert called == [True]
+
+
+# --- restart: pulling first -------------------------------------------------
+
+
+def test_restart_pulls_before_scheduling_the_relaunch(tmp_path, monkeypatch, blocks):
+    client, server = build(tmp_path, monkeypatch, answer(blocks), token="secret")
+    pulled_dir = []
+    monkeypatch.setattr(server.lifecycle, "schedule_restart", lambda *a, **k: None)
+    monkeypatch.setattr(
+        server.lifecycle, "pull_latest",
+        lambda directory: (pulled_dir.append(directory), (True, "Fast-forward to abc123"))[1],
+    )
+
+    body = client.post("/api/restart", headers={"Authorization": "Bearer secret"}).json()
+    assert pulled_dir == [server.WEB_DIR], "restart must pull the repo it actually serves from"
+    assert body["pulled"] == "Fast-forward to abc123"
+
+
+def test_a_failed_pull_refuses_to_restart(tmp_path, monkeypatch, blocks):
+    """An unrelated restart on stale code isn't what pressing this asked for."""
+    client, server = build(tmp_path, monkeypatch, answer(blocks), token="secret")
+    called = []
+    monkeypatch.setattr(server.lifecycle, "schedule_restart", lambda *a, **k: called.append(True))
+    monkeypatch.setattr(
+        server.lifecycle, "pull_latest",
+        lambda *a, **k: (False, "CONFLICT (content): Merge conflict in index.html"),
+    )
+
+    res = client.post("/api/restart", headers={"Authorization": "Bearer secret"})
+    assert res.status_code == 409
+    assert not called, "a refused pull must not restart on the old code anyway"
+
+    kinds = [n["kind"] for n in client.get("/api/notifications", headers={"Authorization": "Bearer secret"}).json()]
+    assert "restart-failed" in kinds
+
+
+def test_skip_pull_env_var_goes_straight_to_a_plain_restart(tmp_path, monkeypatch, blocks):
+    client, server = build(tmp_path, monkeypatch, answer(blocks), token="secret")
+    called = []
+    monkeypatch.setenv("SEVANYA_SKIP_PULL", "1")
+    monkeypatch.setattr(server.lifecycle, "schedule_restart", lambda *a, **k: called.append(True))
+
+    def fail_if_called(*a, **k):
+        raise AssertionError("pull_latest must not run when SEVANYA_SKIP_PULL is set")
+
+    monkeypatch.setattr(server.lifecycle, "pull_latest", fail_if_called)
+
+    res = client.post("/api/restart", headers={"Authorization": "Bearer secret"})
+    assert res.status_code == 200
     assert called == [True]
 
 
