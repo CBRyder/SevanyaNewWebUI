@@ -359,6 +359,11 @@
       }
     }
     
+    document.getElementById("chat-input").addEventListener("input", function () {
+      this.style.height = "auto";
+      this.style.height = this.scrollHeight + "px";
+    });
+    
     document.getElementById("chat-input").addEventListener("beforeinput", function (e) {
       if (e.inputType === "insertLineBreak") {
         e.preventDefault();
