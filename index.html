@@ -315,7 +315,7 @@
       const input = document.getElementById("chat-input");
       const message = input.value.trim();
       if (message) {
-        const chatWindow =  document.querySelector(".chat-window");
+        const chatWindow =  document.querySelector(".chat-log");
         chatWindow.innerHTML += `<div><strong>You:</strong> ${message}</div><br>`; 
         input.value = "";
       }
