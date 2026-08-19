@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sevanya</title>
+  <style>
+    :root {
+      --backgroundC: #2e2e30;
+      --highlightC: #2a2a40;
+      --textC: #f0f0f0;
+      --fillC: #591DA3;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: var(--backgroundC);    
+      color: var(--textC);
+    }
+
+    /* Chat Container */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    }
+
+    /* Header */
+    .header {
+      background: var(--fillC);
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    /* Main Menu */
+    .main-menu {
+      background: var(--backgroundC);
+      padding: 0.5rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      border: var(--fillC);
+      border-radius: 2px;
+    }
+
+    .main-menu button {
+      background: var(--backgroundC);
+      border: none;
+      padding: 0.5rem 1rem;
+      color: VAR(--textC);
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .main-menu button:hover {
+      background: var(--highlightC);
+    }
+
+    /* Chat Window */
+    .chat-window {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+    }
+
+    .chat-window textarea {
+      flex: 1;
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 1rem;
+      resize: none;
+      background: var(--backgroundC);
+      color: var(--textC);
+      border: none;
+      outline: none;
+    }
+
+    .chat-window button {
+      margin-top: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--backgroundC);
+      border: none;
+      color: var(--textC);
+      cursor: pointer;
+    }
+
+    .chat-window button:hover {
+      background: var(--backgroundC);
+    }
+
+    /* Panels (Task List, Journal, Settings) */
+    .panels {
+      position: fixed;
+      top: 0;
+      right: -300px;
+      width: 300px;
+      height: 100vh;
+      background: var(--backgroundC);
+      transition: right 0.3s ease;
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .panels.active {
+      right: 0 ; /*slide in*/
+    }
+
+    .panel {
+      background: var(--backgroundC);
+      padding: 1rem;
+      border: 1px solid var(--fillC);
+      border-radius: 5px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .panel-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .panel-header button {
+      background: none;
+      border: none;
+      color: var(--textC);
+      font-size: 1.2rem;
+    }
+
+    .panel-content {
+      display: none;
+      overflow-y: auto;
+      max-height: 200px;
+    }
+
+    .panel-content.active {
+      display: block;
+    }
+
+    .toggle-panels {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1001;
+    }
+
+    /*Full-screen panel on mobile*/
+    @media (max-width: 600px) {
+      .panels {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--backgroundC);
+        z-index: 1000;
+      }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 600px) {
+      .main-menu {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .panel-content {
+        max-height: 150px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">Sevanya</div>
+
+    <!-- Main Menu -->
+    <div class="main-menu">
+      <button onclick="togglePanels()">☰</button>
+      <button onclick="openPanel('task-list')">Task List</button>
+      <button onclick="openPanel('journal')">Journal</button>
+      <button onclick="openPanel('settings')">Settings</button>
+      <button onclick="restartSession()">Restart</button>
+    </div>
+
+    <!-- Chat Window -->
+    <div class="chat-window">
+      <textarea id="chat-input" placeholder="Type your message here..."></textarea>
+      <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <!-- Panels -->
+    <div class="panels">
+      <!-- Task List Panel -->
+      <div class="panel">
+        <div class="panel-header" onclick="togglePanel('task-list')">
+          <h3>Task List</h3>
+          <button>❌</button>
+        </div>
+        <div class="panel-content" id="task-list">
+          <ul>
+            <li>Set up your first project (e.g., a simple 2D game in C++)</li>
+            <li>Learn basic OOP concepts in Python</li>
+            <li>Debug a Lua script from a game you've played</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Journal Panel -->
+      <div class="panel">
+        <div class="panel-header" onclick="togglePanel('journal')">
+          <h3>Journal</h3>
+          <button>❌</button>
+        </div>
+        <div class="panel-content" id="journal">
+          <p><strong>Day 1:</strong> Learned about pointers in C++ and fixed a memory leak in my game engine.</p>
+          <p><strong>Day 2:</strong> Struggled with Lua syntax but created a basic script to control a character's movement.</p>
+        </div>
+      </div>
+
+      <!-- Settings Panel -->
+      <div class="panel">
+        <div class="panel-header" onclick="togglePanel('settings')">
+          <h3>Settings</h3>
+          <button>❌</button>
+        </div>
+        <div class="panel-content" id="settings">
+          <p>Toggle dark/light mode, adjust chat history, or set language preferences here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Toggle Panels
+    function togglePanel(panelId) {
+      const panelContent = document.getElementById(panelId);
+      panelContent.classList.toggle("active");
+    }
+
+    function togglePanels() {
+      const panels = document.querySelector(".panels");
+      panels.classList.toggle("active");
+    }
+
+    // Show Panels
+    function openPanel(panelId) {
+      const panels = document.querySelectorAll(".panel-content");
+      panels.forEach(panel => {
+        panel.classList.remove("active");
+      });
+      const selectedPanel = document.getElementById(panelId);
+      selectedPanel.classList.add("active");
+    }
+
+    // Restart Session
+    function restartSession() {
+      if (confirm("Are you sure you want to restart the session? This will clear your chat history.")) {
+        window.location.reload();
+      }
+    }
+
+    // Sends Message into the chat window
+    function sendMessage() {
+      const input = document.getElementById("chat-input");
+      const message = input.value.trim();
+      if (message) {
+        const chatWindow =  document.querySelector(".chat-window");
+        chatWindow.innerHTML += `<div><strong>You:</strong> ${message}</div><br>`; 
+        input.value = "";
+      }
+    }
+
+    //enter behavior, i.e. (enter = send and shift/ctrl + enter = new line)
+    document.getElementById("chat-input").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        if (e.ctrlKey) {
+          e.preventDefault(); //prevent default enter behavior
+          this.value += "\n"; //add newline
+        } else if (e.shiftKey) {
+          e.preventDefault(); //prevent like before
+          this.value += "\n"; //new line
+        } else {
+          sendMessage(); //send message
+        }
+      }
+    });
+
+  </script>
+</body>
+</html>
