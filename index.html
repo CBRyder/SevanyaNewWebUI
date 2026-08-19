@@ -210,9 +210,9 @@
     <div class="panels">
       <!-- Task List Panel -->
       <div class="panel">
-        <div class="panel-header" onclick="togglePanel('task-list')">
+        <div class="panel-header" onclick="openPanel('task-list')">
           <h3>Task List</h3>
-          <button>❌</button>
+        
         </div>
         <div class="panel-content" id="task-list">
           <ul>
@@ -225,9 +225,9 @@
 
       <!-- Journal Panel -->
       <div class="panel">
-        <div class="panel-header" onclick="togglePanel('journal')">
+        <div class="panel-header" onclick="openPanel('journal')">
           <h3>Journal</h3>
-          <button>❌</button>
+          
         </div>
         <div class="panel-content" id="journal">
           <p><strong>Day 1:</strong> Learned about pointers in C++ and fixed a memory leak in my game engine.</p>
@@ -237,12 +237,23 @@
 
       <!-- Settings Panel -->
       <div class="panel">
-        <div class="panel-header" onclick="togglePanel('settings')">
+        <div class="panel-header" onclick="openPanel('settings')">
           <h3>Settings</h3>
-          <button>❌</button>
+          
         </div>
         <div class="panel-content" id="settings">
           <p>Toggle dark/light mode, adjust chat history, or set language preferences here.</p>
+        </div>
+      </div>
+      <!-- Settings Panel -->
+      <div class="restart">
+        <div class="panel-header" onclick="openPanel('settings')">
+          <h3>Server Settings</h3>
+          
+        </div>
+        <div class="panel-content" id="settings">
+          <button onclick="restartSession()">⏻ Restart server</button>
+          <p>Restart Server, using the PC</p>
         </div>
       </div>
     </div>
