@@ -106,6 +106,12 @@
       overflow-y: auto;
     }
 
+    .panel-content {
++      display: none;
++      overflow-y: auto;
++      max-height: 200px;
++    }
+
     .panels.active {
       right: 0 ; /*slide in*/
     }
@@ -192,7 +198,6 @@
       <button onclick="openPanel('task-list')">Task List</button>
       <button onclick="openPanel('journal')">Journal</button>
       <button onclick="openPanel('settings')">Settings</button>
-      <button onclick="restartSession()">Restart</button>
     </div>
 
     <!-- Chat Window -->
