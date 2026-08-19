@@ -293,7 +293,7 @@
         return;
       }
       const deadline = Date.now() + 20000;
-      while (Data.now() < deadline) {
+      while (Date.now() < deadline) {
         await new Promise(r => setTimeout(r, 500));
         const now = await getStarted();
         if (now && now > before) {
