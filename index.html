@@ -13,6 +13,7 @@
     }
 
     body {
+      height: 100%;
       margin: 0;
       font-family: "Segoe UI", sans-serif;
       background: var(--backgroundC);    
@@ -20,11 +21,21 @@
     }
 
     /* Chat Container */
-    .chat-container {
+    .container {
       display: flex;
       flex-direction: column;
       height: 100%;
       width: 100%;
+    }
+    
+    .chat-log {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+    
+    .chat-window {
+      flex: 0 0 auto;
     }
 
     /* Header */
