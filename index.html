@@ -170,6 +170,7 @@
     /*Full-screen panel on mobile*/
     @media (max-width: 600px) {
       .panels {
+        display: none;
         position: fixed;
         top: 0;
         left: 0;
@@ -181,7 +182,7 @@
         z-index: 1000;
       }
       .panels.active {
-      right: 0 ; /*slide in*/
+      display: block; /*slide in*/
       }
     }
 
