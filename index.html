@@ -129,19 +129,6 @@
       font-size: 1.2rem;
     }
 
-    .panel-header button {
-      background: none;
-      border: none;
-      color: var(--textC);
-      font-size: 1.2rem;
-    }
-
-    .panel-content {
-      display: none;
-      overflow-y: auto;
-      max-height: 200px;
-    }
-
     .panel-content.active {
       display: block;
     }
@@ -248,11 +235,6 @@
     function togglePanel(panelId) {
       const panelContent = document.getElementById(panelId);
       panelContent.classList.toggle("active");
-    }
-
-    function togglePanels() {
-      const panels = document.querySelector(".panels");
-      panels.classList.toggle("active");
     }
 
     // Show Panels
