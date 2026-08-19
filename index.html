@@ -308,6 +308,12 @@
       
       document.querySelector(".panels").classList.add("active");
     }
+    
+    function insertNewLine() {
+      const input = document.getElementById("chat-input");
+      input.value += "\n";
+      input.focus();
+  }
 
 
     // Sends Message into the chat window
