@@ -363,12 +363,12 @@
       }
     }
     
-    document.getElementById("chat-input").addEventListener("beforeinput", function (e)) {
+    document.getElementById("chat-input").addEventListener("beforeinput", function (e) {
       if (e.inputType === "insertLineBreak") {
         e.preventDefault();
         sendMessage();
       }
-    };
+    });
     
     //enter behavior, i.e. (enter = send and shift/ctrl + enter = new line)
     document.getElementById("chat-input").addEventListener("keydown", function (e) {
