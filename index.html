@@ -337,8 +337,8 @@
     }
     
     function updateMessageColor(who, color) {
-      document.documentElement.style.setProperty('--{who}-msg-color', color)
-      localStorage.setItem('${who}-msg-color', color);
+      document.documentElement.style.setProperty(`--{who}-msg-color`, color)
+      localStorage.setItem(`${who}-msg-color`, color);
     }
     
     (function restoreMessageColors() {
