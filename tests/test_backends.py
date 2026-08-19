@@ -221,6 +221,55 @@ def test_streaming_text_arrives_in_pieces():
     assert reply.stop_reason == "stop"
 
 
+def test_reasoning_tokens_announce_thinking_once_not_per_token():
+    """A reasoning model's thinking can run to hundreds of tokens.
+
+    One signal that she's working on it, not one event per thinking token —
+    nothing downstream wants that many, and it's not the answer anyway.
+    """
+    def handler(request):
+        return sse(
+            {"choices": [{"delta": {"reasoning_content": "Let me "}}]},
+            {"choices": [{"delta": {"reasoning_content": "think about this."}}]},
+            {"choices": [{"delta": {"content": "The answer"}}]},
+            {"choices": [{"delta": {}, "finish_reason": "stop"}]},
+        )
+
+    pieces, reply = drain(local(handler).stream("system", [{"role": "user", "content": "hi"}], []))
+    assert pieces == [("thinking", "thinking…"), "The answer"]
+    assert reply.text() == "The answer"
+
+
+def test_reasoning_content_itself_never_reaches_the_transcript():
+    """The thinking tokens are what she's working out, not what she said.
+
+    Surfacing the raw reasoning as "text" would put her internal monologue
+    in the conversation as if she'd said it out loud.
+    """
+    def handler(request):
+        return sse(
+            {"choices": [{"delta": {"reasoning_content": "hmm, let me consider the options here"}}]},
+            {"choices": [{"delta": {"content": "Yes."}}]},
+            {"choices": [{"delta": {}, "finish_reason": "stop"}]},
+        )
+
+    pieces, reply = drain(local(handler).stream("system", [{"role": "user", "content": "hi"}], []))
+    assert "hmm, let me consider the options here" not in pieces
+    assert reply.text() == "Yes."
+
+
+def test_no_reasoning_means_no_thinking_event():
+    """A non-reasoning model's stream is unaffected -- no field, no signal."""
+    def handler(request):
+        return sse(
+            {"choices": [{"delta": {"content": "Hi"}}]},
+            {"choices": [{"delta": {}, "finish_reason": "stop"}]},
+        )
+
+    pieces, _ = drain(local(handler).stream("system", [{"role": "user", "content": "hi"}], []))
+    assert pieces == ["Hi"]
+
+
 def test_streamed_tool_calls_are_reassembled_from_fragments():
     """The arguments arrive split across chunks, indexed rather than named.
 
@@ -469,6 +518,36 @@ def test_streaming_through_the_agent_yields_text_then_runs_tools(store, tmp_path
     assert ("tool", "list_files") in events, "the tool call should be announced"
     text = "".join(payload for kind, payload in events if kind == "text")
     assert "Looking" in text and "There's notes.md." in text
+
+
+def test_a_thinking_event_reaches_agent_stream_untouched(store, tmp_path, monkeypatch):
+    """_tagged() has to pass an already-tagged tuple through, not re-tag it.
+
+    Naively tagging everything as "text" would turn ("thinking", "thinking…")
+    into ("text", ("thinking", "thinking…")) -- a tuple where the UI expects
+    a string, and thinking mislabeled as an answer either way.
+    """
+    from sevanya import tools
+    from sevanya.agent import Agent
+
+    project = tmp_path / "project"
+    project.mkdir()
+    monkeypatch.setattr(tools, "PROJECT_ROOT", project)
+
+    def handler(request):
+        return sse(
+            {"choices": [{"delta": {"reasoning_content": "considering it"}}]},
+            {"choices": [{"delta": {"content": "Sure."}}]},
+            {"choices": [{"delta": {}, "finish_reason": "stop"}]},
+        )
+
+    agent = Agent(store, store.new_conversation(), backend=local(handler))
+    events = list(agent.stream("hi"))
+
+    assert ("thinking", "thinking…") in events
+    assert all(not (kind == "text" and isinstance(payload, tuple)) for kind, payload in events)
+    text = "".join(payload for kind, payload in events if kind == "text")
+    assert text == "Sure."
 
 
 def test_a_thread_started_by_claude_can_be_continued_locally(store):

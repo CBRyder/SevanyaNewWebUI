@@ -130,8 +130,11 @@ class Agent:
         """Same loop as send(), but yields as it goes instead of at the end.
 
         Yields (kind, payload) pairs:
-            ("text", chunk)  a piece of the reply, as the model produces it
-            ("tool", name)   a tool is about to run
+            ("text", chunk)      a piece of the reply, as the model produces it
+            ("tool", name)       a tool is about to run
+            ("thinking", note)   a reasoning model is working before it answers —
+                                  local backend only; Anthropic's thinking is
+                                  never surfaced, by the same reasoning as below
 
         The web UI uses this so you can watch it work. Siri uses send()
         instead, because a Shortcut can't consume a stream — it makes one
@@ -194,9 +197,15 @@ def _tagged(stream):
     want tagged tuples and the Reply. StopIteration.value is where a
     generator's return value arrives, and passing it back out is what lets
     Agent.stream say `response = yield from _tagged(...)`.
+
+    A backend can also yield an already-tagged (kind, payload) tuple directly
+    — LocalBackend does this for ("thinking", ...), since a reasoning model's
+    thinking tokens aren't the answer and showing them as "text" would put
+    her raw internal monologue in the transcript as if she'd said it.
     """
     while True:
         try:
-            yield ("text", next(stream))
+            item = next(stream)
         except StopIteration as done:
             return done.value
+        yield item if isinstance(item, tuple) else ("text", item)

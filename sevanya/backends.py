@@ -303,6 +303,12 @@ class LocalBackend:
         text_parts: list[str] = []
         calls: dict[int, dict] = {}
         finish = None
+        # Set once, the moment reasoning starts, so the client gets a single
+        # "she's working on it" signal instead of one per thinking token —
+        # a reasoning model's thinking can run to hundreds of tokens, and
+        # nothing downstream wants that many events for something that isn't
+        # the answer.
+        announced_thinking = False
 
         try:
             response = client.send(request, stream=True)
@@ -323,6 +329,16 @@ class LocalBackend:
                 choice = (chunk.get("choices") or [{}])[0]
                 finish = choice.get("finish_reason") or finish
                 delta = choice.get("delta") or {}
+
+                # Qwen3 (and other reasoning models) put thinking tokens in
+                # their own field, separate from the answer. Not shown as
+                # "text" — it's not what she's saying, it's what she's
+                # working out before she says anything, and for a model like
+                # this one it's most of the tokens: surfacing it as text
+                # would put a wall of internal monologue in the transcript.
+                if delta.get("reasoning_content") and not announced_thinking:
+                    announced_thinking = True
+                    yield ("thinking", "thinking…")
 
                 piece = delta.get("content")
                 if piece:
